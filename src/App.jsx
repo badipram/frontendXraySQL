@@ -14,7 +14,7 @@ import HeroSection from './components/heroSection';
 import About from './components/about';
 import Technology from './components/technology';
 
-const BASE = import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:5050';
+const BASE = import.meta.env.VITE_BASE_URL;
 
 function ScrollToHash() {
   const { hash } = useLocation();
@@ -82,9 +82,9 @@ function App() {
 
         setDetectionInfo(data.detection_info || []);
         setResultText(data.result_text || '');
-        setOriginalImg(makeUri(data.original || data.original_base64 || (data.file_name && `http://127.0.0.1:5050/uploads/${data.file_name}`)));
-        setEnhancedImg(makeUri(data.enhanced || data.enhanced_base64 || (data.file_name && `http://127.0.0.1:5050/uploads/enhanced_${data.file_name}`)));
-        setPredictedImg(makeUri(data.predicted || data.predicted_base64 || (data.file_name && `http://127.0.0.1:5050/uploads/pred_${data.file_name}`)));
+        setOriginalImg(makeUri(data.original || data.original_base64 || (data.file_name && `${BASE}/uploads/${data.file_name}`)));
+        setEnhancedImg(makeUri(data.enhanced || data.enhanced_base64 || (data.file_name && `${BASE}/uploads/enhanced_${data.file_name}`)));
+        setPredictedImg(makeUri(data.predicted || data.predicted_base64 || (data.file_name && `${BASE}/uploads/pred_${data.file_name}`)));
 
         localStorage.setItem('lastPrediction', JSON.stringify(data));
       } catch (err) {
@@ -102,7 +102,7 @@ function App() {
   }
 
   const handleChange = async (e) => {
-    await fetch('http://127.0.0.1:5050/reset-prediction', { method: 'POST' });
+    await fetch(`${BASE}/reset-prediction`, { method: 'POST' });
 
     localStorage.removeItem('lastPrediction');
 
