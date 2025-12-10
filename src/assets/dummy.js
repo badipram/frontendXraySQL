@@ -30,7 +30,7 @@ export const technologyItems = [
         description: " Framework deep learning yang digunakan untuk membangun dan melatih model deteksi fraktur atau kelainan tulang"
     },
     {
-        title: "Python",
-        description: "Bahasa pemrograman inti dalam pengembangan model AI dan backend system untuk deteksi serta rekonstruksi citra"
+        title: "ReactJS",
+        description: "Framework frontend digunakan untuk membangun UI interaktif pada aplikasi RekoMed."
     },
 ];
