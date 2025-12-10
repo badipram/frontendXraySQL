@@ -205,11 +205,11 @@ doc.setFontSize(11);
     if (detectionInfo.length === 1) {
       const conf = ((detectionInfo[0].confidence || 0) * 100).toFixed(2);
       if (label.includes("fracture")) {
-        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray dengan tingkat keyakinan sebesar ${conf}%.`;
+        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray dengan tingkat confidence sebesar ${conf}%.`;
       } else if (label.includes("healthy")) {
-        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat keyakinan sebesar ${conf}%.`;
+        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat confidence sebesar ${conf}%.`;
       } else {
-        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat keyakinan sebesar ${conf}%.`;
+        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat confidence sebesar ${conf}%.`;
       }
     } 
     // ini kalo ada lebih dari 2 yang terdeteksi
@@ -219,11 +219,11 @@ doc.setFontSize(11);
         .join(" | ");
 
       if (label.includes("fracture")) {
-        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray. Tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray. Tingkat confidence: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
       } else if (label.includes("healthy")) {
-        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat confidence: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
       } else {
-        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat confidence: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
       }
     }
 
