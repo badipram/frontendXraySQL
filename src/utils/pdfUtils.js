@@ -87,53 +87,150 @@ export const generatePDF = async (predictedImg, detectionInfo = []) => {
     "deteksi tulang berdasarkan model yang telah dilatih. Citra di bawah menunjukkan hasil akhir dari analisis sistem.";
   doc.text(paragraph, margin, 205, { maxWidth: pageWidth - margin * 2 });
 
-  // === DETECTION INFO ===
-  let infoY = 260;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(`Jumlah Fracture Terdeteksi : ${detectionInfo.length}`, margin, infoY);
+// === DETECTION INFO ===
+let infoY = 260;
+doc.setFont("helvetica", "bold");
+doc.setFontSize(12);
+doc.text(`Terdeteksi : ${detectionInfo.length}`, margin, infoY);
 
-  if (detectionInfo.length > 0) {
-    const conf = ((detectionInfo[0].confidence || 0) * 100).toFixed(2);
-    const bbox = (detectionInfo[0].bbox || []).map((n) => Number(n).toFixed(1)).join(", ");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text(`Confidence : ${conf}%`, margin, infoY + 20);
-    doc.text(`Koordinat : ${bbox}`, margin, infoY + 40);
-  }
+let detailY = infoY + 25;
 
-  // === SUBTITLE (Before image) ===
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("Hasil Deteksi Model YOLOv8", pageWidth / 2, 330, { align: "center" });
+if (detectionInfo.length > 0) {
+  // === TABLE HEADER ===
+doc.setFont("helvetica", "bold");
+doc.setFontSize(10);
+
+const rowHeight = 18;
+
+const colWidths = {
+  no: 30,
+  confidence: 80,
+  koordinat: pageWidth - margin * 2 - (30 + 80)
+};
+
+doc.setFillColor(30, 60, 114);
+doc.rect(margin, detailY, colWidths.no + colWidths.confidence + colWidths.koordinat, rowHeight, "F");
+
+doc.setDrawColor(0, 0, 0);
+doc.setLineWidth(0.5);
+doc.rect(margin, detailY, colWidths.no, rowHeight);
+doc.rect(margin + colWidths.no, detailY, colWidths.confidence, rowHeight);
+doc.rect(margin + colWidths.no + colWidths.confidence, detailY, colWidths.koordinat, rowHeight);
+
+doc.setTextColor(255, 255, 255);
+doc.text("No", margin + 5, detailY + 12);
+doc.text("Confidence", margin + colWidths.no + 5, detailY + 12);
+doc.text("Koordinat [xmin, ymin, xmax, ymax]", margin + colWidths.no + colWidths.confidence + 5, detailY + 12);
+
+detailY += rowHeight;
+  
+  // === TABLE ROWS ===
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0, 0, 0); // Black text
+  doc.setLineWidth(0.5);
+  
+  detectionInfo.forEach((det, idx) => {
+    const conf = ((det.confidence || 0) * 100).toFixed(2);
+    const bbox = (det.bbox || []).map((n) => Number(n).toFixed(1)).join(", ");
+    
+    // Draw row borders
+    doc.rect(margin, detailY, colWidths.no, rowHeight);
+    doc.rect(margin + colWidths.no, detailY, colWidths.confidence, rowHeight);
+    doc.rect(margin + colWidths.no + colWidths.confidence, detailY, colWidths.koordinat, rowHeight);
+    
+    // Cell content
+    doc.setFontSize(9);
+    doc.text(`${idx + 1}`, margin + 5, detailY + 12, { align: "left" });
+    doc.text(`${conf}%`, margin + colWidths.no + 5, detailY + 12, { align: "left" });
+    doc.text(bbox, margin + colWidths.no + colWidths.confidence + 5, detailY + 12, { align: "left", maxWidth: colWidths.koordinat - 10 });
+    
+    detailY += rowHeight;
+
+    if (detailY > 500) {
+      doc.addPage();
+      detailY = 50;
+    }
+  });
+}
+
+// === SUBTITLE (Before image) ===
+detailY += 20;
+doc.setFont("helvetica", "bold");
+doc.setFontSize(12);
+doc.text("Hasil Deteksi Model YOLOv8", pageWidth / 2, detailY, { align: "center" });
+
 
   // === ADD IMAGE ===
   if (predictedImg) {
     const imgData = await ensureDataUrl(predictedImg);
     if (imgData) {
       let imgW = 260, imgH = 260;
-      const img = new Image();
-      img.src = imgData;
-      await new Promise((res) => (img.onload = res));
-      const aspect = img.width / img.height;
-      if (aspect > 1) imgH = imgW / aspect;
-      else imgW = imgH * aspect;
+      try {
+        const img = new Image();
+        img.src = imgData;
+        await new Promise((res) => (img.onload = res));
+        const aspect = img.width / img.height;
+        if (aspect > 1) imgH = imgW / aspect;
+        else imgW = imgH * aspect;
+      // eslint-disable-next-line no-unused-vars
+      } catch (e) {
+        // fallback to default size
+      }
       const centerX = (pageWidth - imgW) / 2;
-      doc.addImage(imgData, "JPEG", centerX, 350, imgW, imgH);
+      const imgY = detailY + 25;
+      doc.addImage(imgData, "JPEG", centerX, imgY, imgW, imgH);
     }
   }
 
-  // === FOOTER DESCRIPTION ===
-  const footerY = 640;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+
+// === FOOTER DESCRIPTION ===
+const footerY = pageWidth > 600 ? 750 : 700;
+doc.setFont("helvetica", "normal");
+doc.setFontSize(11);
+
   if (detectionInfo.length > 0) {
-    const conf = ((detectionInfo[0].confidence || 0) * 100).toFixed(2);
-    const text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray dengan tingkat persentasi sebesar ${conf}%.`;
+    const maxConf = Math.max(...detectionInfo.map(d => d.confidence || 0));
+    const maxConfPercent = ((maxConf || 0) * 100).toFixed(2);
+
+    const label = (
+      detectionInfo[0].label ||
+      detectionInfo[0].name ||
+      detectionInfo[0].class_name ||
+      ""
+    ).toLowerCase();
+
+    let text = "";
+
+    // ini kalau hanya satu
+    if (detectionInfo.length === 1) {
+      const conf = ((detectionInfo[0].confidence || 0) * 100).toFixed(2);
+      if (label.includes("fracture")) {
+        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray dengan tingkat keyakinan sebesar ${conf}%.`;
+      } else if (label.includes("healthy")) {
+        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat keyakinan sebesar ${conf}%.`;
+      } else {
+        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat keyakinan sebesar ${conf}%.`;
+      }
+    } 
+    // ini kalo ada lebih dari 2 yang terdeteksi
+    else {
+      const confList = detectionInfo
+        .map((det, idx) => `${idx + 1}. ${((det.confidence || 0) * 100).toFixed(2)}%`)
+        .join(" | ");
+
+      if (label.includes("fracture")) {
+        text = `Model YOLOv8 berhasil mendeteksi adanya indikasi fraktur pada citra X-ray. Tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+      } else if (label.includes("healthy")) {
+        text = `Model YOLOv8 mendeteksi bahwa kondisi tulang pada citra X-ray berada dalam keadaan sehat dengan tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+      } else {
+        text = `Model YOLOv8 mendeteksi objek pada citra X-ray dengan tingkat keyakinan: ${confList}. Confidence tertinggi sebesar ${maxConfPercent}%.`;
+      }
+    }
+
     doc.text(text, margin, footerY, { maxWidth: pageWidth - margin * 2 });
   } else {
     doc.text(
-      "Model YOLOv8 tidak mendeteksi adanya indikasi fraktur pada citra X-ray.",
+      "Model YOLOv8 tidak mendeteksi adanya indikasi fraktur atau kelainan pada citra X-ray.",
       margin,
       footerY,
       { maxWidth: pageWidth - margin * 2 }

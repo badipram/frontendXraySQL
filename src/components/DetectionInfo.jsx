@@ -2,7 +2,7 @@ function DetectionInfo ({ detectionInfo}) {
     return (
         <div style={{marginTop: 20}}>
             <h3>Keterangan Deteksi</h3>
-            <p>Jumlah Fraktur Terdeteksi: <b>{detectionInfo.length}</b></p>
+            <p>Jumlah Label Terdeteksi: <b>{detectionInfo.length}</b></p>
             {detectionInfo.length > 0 && (
                 <table border="1" cellPadding="4">
                     <thead>
